@@ -31,14 +31,17 @@ export default function App() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-background p-4 border-b-2 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
-        Convex + React + Convex Auth
+        Convex + ReactFlow
         <SignOutButton />
       </header>
-      <main className="p-8 flex flex-col gap-16">
-        <h1 className="text-4xl font-bold text-center">
-          Convex + React + Convex Auth
-        </h1>
+      <main className="flex flex-col gap-16">
+        <h1 className="text-4xl font-bold text-center">Convex + ReactFlow</h1>
         <Authenticated>
+          <p>
+            This is a simple example of how to use Convex with ReactFlow. Click
+            to create nodes, and connect them with edges by dragging from the
+            handles.
+          </p>
           <Content />
         </Authenticated>
         <Unauthenticated>
@@ -252,7 +255,10 @@ function Content() {
   }
 
   return (
-    <div className="relative w-screen h-screen" ref={reactFlowWrapper}>
+    <div
+      className="relative w-screen h-screen border-2 border-slate-200 dark:border-slate-800 rounded-md"
+      ref={reactFlowWrapper}
+    >
       <div className="absolute inset-0">
         <ReactFlow
           nodes={nodes}
