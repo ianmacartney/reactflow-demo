@@ -1,14 +1,20 @@
-# Welcome to your Convex + React (Vite) + Convex Auth app
+# Convex + ReactFlow example
 
-This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
+This is a simple example of how to use Convex with ReactFlow.
 
-After the initial setup (<2 minutes) you'll have a working full-stack app using:
+Just click to create nodes, and connect them with edges by dragging from the
+handles.
 
-- Convex as your backend (database, server logic)
-- [React](https://react.dev/) as your frontend (web page interactivity)
-- [Vite](https://vitest.dev/) for optimized web hosting
-- [Tailwind](https://tailwindcss.com/) for building great looking UI
-- [Convex Auth](https://labs.convex.dev/auth) for authentication
+[ReactFlow](https://reactflow.dev/) is a popular library for building flow charts and diagrams.
+
+[Convex](https://convex.dev/) is a reactive database with serverless functions
+for building full-stack apps. It can replace your whole backend (except serving
+the html/css/js for your frontend).
+
+It uses [Convex Auth](https://labs.convex.dev/auth) for authentication.
+By default, it uses a username/password auth flow, but there's also an
+anonymous login, and you could add other auth providers, like Google,
+GitHub, Apple, etc.
 
 ## Get started
 
@@ -22,7 +28,7 @@ npm run dev
 If you're reading this README on GitHub and want to use this template, run:
 
 ```
-npm create convex@latest -- -t react-vite-convexauth
+npm create convex@latest -- -t get-convex/reactflow-example
 ```
 
 For more information on how to configure Convex Auth, check out the [Convex Auth docs](https://labs.convex.dev/auth/).
