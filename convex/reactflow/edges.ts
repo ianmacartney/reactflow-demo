@@ -19,6 +19,7 @@ import { addEdge, applyEdgeChanges } from "reactflow";
 export const get = query({
   args: { diagramId: v.string() },
   handler: async (ctx, args) => {
+    // Do access checks here
     const all = await ctx.db
       .query("edges")
       .withIndex("diagram", (q) => q.eq("diagramId", args.diagramId))
@@ -33,6 +34,7 @@ export const update = mutation({
     changes: v.array(edgeChangeValidator(rfEdge)),
   },
   handler: async (ctx, args) => {
+    // Do access checks here
     // Get the ids of the edges that are being changed
     const ids = args.changes.flatMap((change) =>
       change.type === "add" || change.type === "reset"
@@ -97,6 +99,7 @@ export const connect = mutation({
     connection: connectionValidator,
   },
   handler: async (ctx, args) => {
+    // Do access checks here
     const { source, target, sourceHandle, targetHandle } = args.connection;
     if (!source || !target) {
       throw new Error("Source or target not specified");
