@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthActions } from "@convex-dev/auth/react";
 import {
   Authenticated,
   Unauthenticated,
@@ -7,19 +8,19 @@ import {
   useMutation,
   useQuery,
 } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useCallback, useState } from "react";
+import { MouseEvent as ReactMouseEvent, useCallback, useRef, useState } from "react";
 import ReactFlow, {
+  addEdge,
   applyEdgeChanges,
   applyNodeChanges,
   Connection,
-  EdgeChange,
-  NodeChange,
-  addEdge,
   Controls,
+  EdgeChange,
   MiniMap,
+  NodeChange,
+  ReactFlowInstance
 } from "reactflow";
+import { api } from "../convex/_generated/api";
 
 export default function App() {
   return (
@@ -140,6 +141,9 @@ const diagramId = window.location.hash.slice(1);
 function Content() {
   const nodes = useQuery(api.reactflow.nodes.get, { diagramId });
   const edges = useQuery(api.reactflow.edges.get, { diagramId });
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  
   const updateNodes = useMutation(
     api.reactflow.nodes.update,
   ).withOptimisticUpdate((store, args) => {
@@ -147,12 +151,25 @@ function Content() {
     const updated = applyNodeChanges(args.changes, nodes);
     store.setQuery(api.reactflow.nodes.get, { diagramId }, updated);
   });
+  
+  const createNode = useMutation(api.reactflow.nodes.create).withOptimisticUpdate((store, args) => {
+    const nodes = store.getQuery(api.reactflow.nodes.get, { diagramId }) ?? [];
+    const newNode = {
+      id: args.nodeId,
+      position: args.position,
+      data: args.data,
+      type: 'default'
+    };
+    store.setQuery(api.reactflow.nodes.get, { diagramId }, [...nodes, newNode]);
+  });
+  
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       updateNodes({ diagramId, changes });
     },
     [updateNodes],
   );
+  
   const updateEdges = useMutation(
     api.reactflow.edges.update,
   ).withOptimisticUpdate((store, args) => {
@@ -160,6 +177,7 @@ function Content() {
     const updated = applyEdgeChanges(args.changes, edges);
     store.setQuery(api.reactflow.edges.get, { diagramId }, updated);
   });
+  
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       updateEdges({ diagramId, changes });
@@ -182,6 +200,32 @@ function Content() {
     [connect],
   );
 
+  const onInit = useCallback((instance: ReactFlowInstance) => {
+    setReactFlowInstance(instance);
+  }, []);
+  
+  const onPaneClick = useCallback(
+    (event: ReactMouseEvent<Element, MouseEvent>) => {
+      if (reactFlowInstance && event.target instanceof HTMLElement && event.target.classList.contains('react-flow__pane')) {
+        const position = reactFlowInstance.screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        
+        const randomValue = Math.floor(Math.random() * 100);
+        const nodeId = `node-${Math.floor(Math.random() * 10000)}`;
+        
+        createNode({ 
+          diagramId, 
+          nodeId, 
+          position, 
+          data: { foo: randomValue } 
+        });
+      }
+    },
+    [reactFlowInstance, createNode, diagramId]
+  );
+
   if (nodes === undefined || edges === undefined) {
     return (
       <div className="mx-auto">
@@ -191,7 +235,7 @@ function Content() {
   }
 
   return (
-    <div className="relative w-screen h-screen">
+    <div className="relative w-screen h-screen" ref={reactFlowWrapper}>
       <div className="absolute inset-0">
         <ReactFlow
           nodes={nodes}
@@ -199,6 +243,8 @@ function Content() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onInit={onInit}
+          onPaneClick={onPaneClick}
           fitView
         >
           <MiniMap />
