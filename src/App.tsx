@@ -21,7 +21,6 @@ import ReactFlow, {
   Controls,
   EdgeChange,
   MiniMap,
-  Node,
   NodeChange,
   ReactFlowInstance,
 } from "reactflow";
