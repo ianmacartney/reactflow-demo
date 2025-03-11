@@ -8,6 +8,7 @@ import {
 } from "convex/react";
 import {
   MouseEvent as ReactMouseEvent,
+  TouchEvent,
   useCallback,
   useRef,
   useState,
@@ -20,6 +21,7 @@ import ReactFlow, {
   Controls,
   EdgeChange,
   MiniMap,
+  Node,
   NodeChange,
   ReactFlowInstance,
 } from "reactflow";
@@ -87,11 +89,36 @@ function Content() {
       type: "default",
     };
     store.setQuery(api.reactflow.nodes.get, { diagramId }, [...nodes, newNode]);
+    const sourceNode = args.sourceNode;
+    if (sourceNode) {
+      const source = nodes.find((node) => node.id === sourceNode.id);
+      if (source) {
+        const targetHandle =
+          source.position.y > args.position.y ? "top" : "bottom";
+        const newEdges = addEdge(
+          {
+            id: crypto.randomUUID(),
+            source: source.id,
+            target: args.nodeId,
+            sourceHandle: sourceNode.handlepos,
+            targetHandle,
+          },
+          [],
+        );
+        const edges =
+          store.getQuery(api.reactflow.edges.get, { diagramId }) ?? [];
+        store.setQuery(api.reactflow.edges.get, { diagramId }, [
+          ...edges,
+          ...newEdges,
+        ]);
+      }
+    }
   });
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       // Separate out data to sync here
+      console.log("onNodesChange", { changes });
       updateNodes({ diagramId, changes });
     },
     [updateNodes],
@@ -108,6 +135,7 @@ function Content() {
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       // Separate out data to sync here
+      console.log("onEdgesChange", { changes });
       updateEdges({ diagramId, changes });
     },
     [updateEdges],
@@ -123,6 +151,7 @@ function Content() {
   );
   const onConnect = useCallback(
     (connection: Connection) => {
+      console.log("onConnect", { connection });
       connect({ diagramId, connection });
     },
     [connect],
@@ -132,6 +161,27 @@ function Content() {
     setReactFlowInstance(instance);
   }, []);
 
+  const [connectSource, setConnectSource] = useState<
+    { id: string; handlepos: string } | undefined
+  >(undefined);
+
+  const onConnectStart = useCallback(
+    (event: ReactMouseEvent<Element, MouseEvent> | TouchEvent<Element>) => {
+      console.log("onConnectStart", { event });
+      // get the edge being created
+      const dataset = (event.target as HTMLElement).dataset;
+      const node = reactFlowInstance
+        ?.getNodes()
+        .find((node) => node.id === dataset?.nodeid);
+      const handlepos = dataset?.handlepos;
+      if (node && handlepos) {
+        setConnectSource({ id: node.id, handlepos });
+      }
+      console.log("starting connect", connectSource);
+    },
+    [reactFlowInstance],
+  );
+
   const onPaneClick = useCallback(
     (event: ReactMouseEvent<Element, MouseEvent>) => {
       if (
@@ -140,20 +190,23 @@ function Content() {
         event.target.classList.contains("react-flow__pane")
       ) {
         const position = reactFlowInstance.screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
+          x: event.clientX - 150,
+          y: event.clientY - 22,
         });
 
         const randomValue = Math.floor(Math.random() * 100);
         const nodeId = `node-${Math.floor(Math.random() * 10000)}`;
 
+        console.log("onPaneClick", { event, position, nodeId });
         // Combine data to sync up / split out
         createNode({
           diagramId,
           nodeId,
           position,
           data: { foo: randomValue },
+          sourceNode: connectSource,
         });
+        setConnectSource(undefined);
       }
     },
     [reactFlowInstance, createNode, diagramId],
@@ -178,6 +231,7 @@ function Content() {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onConnectStart={onConnectStart}
           onConnect={onConnect}
           onInit={onInit}
           onPaneClick={onPaneClick}
