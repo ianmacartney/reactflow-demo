@@ -9,10 +9,19 @@ import {
 } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useState } from "react";
-import ReactFlow from "reactflow";
+import { useCallback, useState } from "react";
+import ReactFlow, {
+  applyEdgeChanges,
+  applyNodeChanges,
+  Connection,
+  EdgeChange,
+  NodeChange,
+  addEdge,
+  Controls,
+  MiniMap,
+} from "reactflow";
 
-export default function App({ id }: { id: string }) {
+export default function App() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-background p-4 border-b-2 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
@@ -24,7 +33,7 @@ export default function App({ id }: { id: string }) {
           Convex + React + Convex Auth
         </h1>
         <Authenticated>
-          <Content id={id} />
+          <Content />
         </Authenticated>
         <Unauthenticated>
           <SignInForm />
@@ -79,6 +88,7 @@ function SignInForm() {
           className="bg-background text-foreground rounded-md p-2 border-2 border-slate-200 dark:border-slate-800"
           type="password"
           name="password"
+          autoComplete="current-password"
           placeholder="Password"
         />
         <button
@@ -128,24 +138,49 @@ window.addEventListener("hashchange", () => {
 const diagramId = window.location.hash.slice(1);
 
 function Content() {
-  const { nodes } =
-    useQuery(api.reactflow.nodes.get, { diagramId }) ?? [];
-  const { edges } =
-    useQuery(api.reactflow.edges.get, { diagramId }) ?? [];
-  const updateNodes = useMutation(api.reactflow.nodes.update).withOptimisticUpdate(
-    (store) => {
-      const nodes = store.getQuery(api.reactflow.nodes.get, { diagramId }) ?? [];
-      return nodes.map((node) => {
-        if (node.id === update.id) {
-          return update;
-        }
-        return node;
-      });
-    }
+  const nodes = useQuery(api.reactflow.nodes.get, { diagramId });
+  const edges = useQuery(api.reactflow.edges.get, { diagramId });
+  const updateNodes = useMutation(
+    api.reactflow.nodes.update,
+  ).withOptimisticUpdate((store, args) => {
+    const nodes = store.getQuery(api.reactflow.nodes.get, { diagramId }) ?? [];
+    const updated = applyNodeChanges(args.changes, nodes);
+    store.setQuery(api.reactflow.nodes.get, { diagramId }, updated);
+  });
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      updateNodes({ diagramId, changes });
+    },
+    [updateNodes],
   );
-        }
-  const updateNodes = useMutation(api.myFunctions.updateNodes).withOptimisticUpdate;
-  const updateEdges = useMutation(api.myFunctions.updateEdges);
+  const updateEdges = useMutation(
+    api.reactflow.edges.update,
+  ).withOptimisticUpdate((store, args) => {
+    const edges = store.getQuery(api.reactflow.edges.get, { diagramId }) ?? [];
+    const updated = applyEdgeChanges(args.changes, edges);
+    store.setQuery(api.reactflow.edges.get, { diagramId }, updated);
+  });
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      updateEdges({ diagramId, changes });
+    },
+    [updateEdges],
+  );
+
+  const connect = useMutation(api.reactflow.edges.connect).withOptimisticUpdate(
+    (store, args) => {
+      const edges =
+        store.getQuery(api.reactflow.edges.get, { diagramId }) ?? [];
+      const updated = addEdge(args.connection, edges);
+      store.setQuery(api.reactflow.edges.get, { diagramId }, updated);
+    },
+  );
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      connect({ diagramId, connection });
+    },
+    [connect],
+  );
 
   if (nodes === undefined || edges === undefined) {
     return (
@@ -156,63 +191,20 @@ function Content() {
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-lg mx-auto">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={updateNodes}
-        onEdgesChange={updateEdges}
-      />
-      <div className="flex flex-col">
-        <p className="text-lg font-bold">Useful resources:</p>
-        <div className="flex gap-2">
-          <div className="flex flex-col gap-2 w-1/2">
-            <ResourceCard
-              title="Convex docs"
-              description="Read comprehensive documentation for all Convex features."
-              href="https://docs.convex.dev/home"
-            />
-            <ResourceCard
-              title="Stack articles"
-              description="Learn about best practices, use cases, and more from a growing
-            collection of articles, videos, and walkthroughs."
-              href="https://www.typescriptlang.org/docs/handbook/2/basic-types.html"
-            />
-          </div>
-          <div className="flex flex-col gap-2 w-1/2">
-            <ResourceCard
-              title="Templates"
-              description="Browse our collection of templates to get started quickly."
-              href="https://www.convex.dev/templates"
-            />
-            <ResourceCard
-              title="Discord"
-              description="Join our developer community to ask questions, trade tips & tricks,
-            and show off your projects."
-              href="https://www.convex.dev/community"
-            />
-          </div>
-        </div>
+    <div className="relative w-screen h-screen">
+      <div className="absolute inset-0">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          fitView
+        >
+          <MiniMap />
+          <Controls />
+        </ReactFlow>
       </div>
-    </div>
-  );
-}
-
-function ResourceCard({
-  title,
-  description,
-  href,
-}: {
-  title: string;
-  description: string;
-  href: string;
-}) {
-  return (
-    <div className="flex flex-col gap-2 bg-slate-200 dark:bg-slate-800 p-4 rounded-md h-28 overflow-auto">
-      <a href={href} className="text-sm underline hover:no-underline">
-        {title}
-      </a>
-      <p className="text-xs">{description}</p>
     </div>
   );
 }

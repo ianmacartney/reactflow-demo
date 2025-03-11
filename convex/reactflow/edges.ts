@@ -8,9 +8,13 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { edgeChangeValidator, edgeValidator } from "./types";
+import {
+  connectionValidator,
+  edgeChangeValidator,
+  edgeValidator,
+} from "./types";
 import { rfEdge } from "../schema";
-import { applyEdgeChanges } from "reactflow";
+import { addEdge, applyEdgeChanges } from "reactflow";
 
 export const get = query({
   args: { diagramId: v.string() },
@@ -82,6 +86,76 @@ export const update = mutation({
               target,
             });
           }
+      }),
+    );
+  },
+});
+
+export const connect = mutation({
+  args: {
+    diagramId: v.string(),
+    connection: connectionValidator,
+  },
+  handler: async (ctx, args) => {
+    const { source, target, sourceHandle, targetHandle } = args.connection;
+    if (!source || !target) {
+      throw new Error("Source or target not specified");
+    }
+    const sourceDoc = await ctx.db
+      .query("nodes")
+      .withIndex("id", (q) => q.eq("node.id", source))
+      .unique();
+    const targetDoc = await ctx.db
+      .query("nodes")
+      .withIndex("id", (q) => q.eq("node.id", target))
+      .unique();
+    if (!sourceDoc || !targetDoc) {
+      throw new Error("Source or target not found");
+    }
+    const existing = await ctx.db
+      .query("edges")
+      .withIndex("source", (q) =>
+        q.eq("source", sourceDoc._id).eq("target", targetDoc._id),
+      )
+      .collect();
+    if (
+      existing.find(
+        (e) =>
+          e.edge.source === source &&
+          e.edge.target === target &&
+          e.edge.sourceHandle === sourceHandle &&
+          e.edge.targetHandle === targetHandle,
+      )
+    ) {
+      return;
+    }
+    const sourceNode = await ctx.db
+      .query("nodes")
+      .withIndex("id", (q) => q.eq("node.id", source))
+      .unique();
+    if (sourceNode) {
+      console.log("sourceNode already exists", args.connection);
+      return;
+    }
+    const targetNode =
+      target &&
+      (await ctx.db
+        .query("nodes")
+        .withIndex("id", (q) => q.eq("node.id", target))
+        .unique());
+    if (targetNode) {
+      console.log("targetNode already exists", args.connection);
+      return;
+    }
+    const edges = addEdge(args.connection, []);
+    await Promise.all(
+      edges.map(async (edge) => {
+        await ctx.db.insert("edges", {
+          diagramId: args.diagramId,
+          edge,
+          source: sourceDoc._id,
+          target: targetDoc._id,
+        });
       }),
     );
   },

@@ -310,3 +310,11 @@ export const edgeChangeValidator = <
 const _edgeChange: EdgeChange = {} as Infer<
   ReturnType<typeof edgeChangeValidator<VString<string, "required">>>
 >;
+
+const stringOrNull = v.union(v.string(), v.null());
+export const connectionValidator = v.object({
+  source: stringOrNull,
+  target: stringOrNull,
+  sourceHandle: stringOrNull,
+  targetHandle: stringOrNull,
+});
