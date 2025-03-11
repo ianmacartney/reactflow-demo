@@ -1,9 +1,6 @@
 import { v } from "convex/values";
 import { applyNodeChanges } from "reactflow";
-import {
-  mutation,
-  query
-} from "../_generated/server";
+import { mutation, query } from "../_generated/server";
 import { nodeData, rfNode } from "../schema";
 import { nodeChangeValidator } from "./types";
 
@@ -15,6 +12,7 @@ export const get = query({
       .query("nodes")
       .withIndex("diagram", (q) => q.eq("diagramId", args.diagramId))
       .collect();
+    // Modify data returned, join it, etc. here
     return all.map((node) => node.node);
   },
 });
@@ -30,14 +28,18 @@ export const create = mutation({
     data: nodeData,
   },
   handler: async (ctx, args) => {
+    // Do access checks here
     // Create a new node with the simplified structure
     const node = {
       id: args.nodeId,
       position: args.position,
       data: args.data,
-      type: 'default'
+      type: "default",
     };
 
+    // Generate related documents and store ids in the node here
+
+    // Associate it with a user, etc. here
     // Insert directly into the database
     await ctx.db.insert("nodes", {
       diagramId: args.diagramId,

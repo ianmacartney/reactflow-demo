@@ -8,7 +8,12 @@ import {
   useMutation,
   useQuery,
 } from "convex/react";
-import { MouseEvent as ReactMouseEvent, useCallback, useRef, useState } from "react";
+import {
+  MouseEvent as ReactMouseEvent,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
 import ReactFlow, {
   addEdge,
   applyEdgeChanges,
@@ -18,7 +23,7 @@ import ReactFlow, {
   EdgeChange,
   MiniMap,
   NodeChange,
-  ReactFlowInstance
+  ReactFlowInstance,
 } from "reactflow";
 import { api } from "../convex/_generated/api";
 
@@ -140,10 +145,13 @@ const diagramId = window.location.hash.slice(1);
 
 function Content() {
   const nodes = useQuery(api.reactflow.nodes.get, { diagramId });
+  // Combine data with local state to change nodes here
   const edges = useQuery(api.reactflow.edges.get, { diagramId });
+  // Combine data with local state to change edges here
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance | null>(null);
+
   const updateNodes = useMutation(
     api.reactflow.nodes.update,
   ).withOptimisticUpdate((store, args) => {
@@ -151,25 +159,28 @@ function Content() {
     const updated = applyNodeChanges(args.changes, nodes);
     store.setQuery(api.reactflow.nodes.get, { diagramId }, updated);
   });
-  
-  const createNode = useMutation(api.reactflow.nodes.create).withOptimisticUpdate((store, args) => {
+
+  const createNode = useMutation(
+    api.reactflow.nodes.create,
+  ).withOptimisticUpdate((store, args) => {
     const nodes = store.getQuery(api.reactflow.nodes.get, { diagramId }) ?? [];
     const newNode = {
       id: args.nodeId,
       position: args.position,
       data: args.data,
-      type: 'default'
+      type: "default",
     };
     store.setQuery(api.reactflow.nodes.get, { diagramId }, [...nodes, newNode]);
   });
-  
+
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
+      // Separate out data to sync here
       updateNodes({ diagramId, changes });
     },
     [updateNodes],
   );
-  
+
   const updateEdges = useMutation(
     api.reactflow.edges.update,
   ).withOptimisticUpdate((store, args) => {
@@ -177,9 +188,10 @@ function Content() {
     const updated = applyEdgeChanges(args.changes, edges);
     store.setQuery(api.reactflow.edges.get, { diagramId }, updated);
   });
-  
+
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
+      // Separate out data to sync here
       updateEdges({ diagramId, changes });
     },
     [updateEdges],
@@ -203,27 +215,32 @@ function Content() {
   const onInit = useCallback((instance: ReactFlowInstance) => {
     setReactFlowInstance(instance);
   }, []);
-  
+
   const onPaneClick = useCallback(
     (event: ReactMouseEvent<Element, MouseEvent>) => {
-      if (reactFlowInstance && event.target instanceof HTMLElement && event.target.classList.contains('react-flow__pane')) {
+      if (
+        reactFlowInstance &&
+        event.target instanceof HTMLElement &&
+        event.target.classList.contains("react-flow__pane")
+      ) {
         const position = reactFlowInstance.screenToFlowPosition({
           x: event.clientX,
           y: event.clientY,
         });
-        
+
         const randomValue = Math.floor(Math.random() * 100);
         const nodeId = `node-${Math.floor(Math.random() * 10000)}`;
-        
-        createNode({ 
-          diagramId, 
-          nodeId, 
-          position, 
-          data: { foo: randomValue } 
+
+        // Combine data to sync up / split out
+        createNode({
+          diagramId,
+          nodeId,
+          position,
+          data: { foo: randomValue },
         });
       }
     },
-    [reactFlowInstance, createNode, diagramId]
+    [reactFlowInstance, createNode, diagramId],
   );
 
   if (nodes === undefined || edges === undefined) {

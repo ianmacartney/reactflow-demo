@@ -24,6 +24,7 @@ export const get = query({
       .query("edges")
       .withIndex("diagram", (q) => q.eq("diagramId", args.diagramId))
       .collect();
+    // Modify data returned, join it, etc. here
     return all.map((edge) => edge.edge);
   },
 });
