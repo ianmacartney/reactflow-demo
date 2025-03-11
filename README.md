@@ -5,6 +5,10 @@ This is a simple example of how to use Convex with ReactFlow.
 Just click to create nodes, and connect them with edges by dragging from the
 handles.
 
+Using optimistic updates for fast local performance.
+
+![screenshot](./screenshot.png)
+
 [ReactFlow](https://reactflow.dev/) is a popular library for building flow charts and diagrams.
 
 [Convex](https://convex.dev/) is a reactive database with serverless functions
