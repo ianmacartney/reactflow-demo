@@ -137,8 +137,8 @@ export const connect = mutation({
       .query("nodes")
       .withIndex("id", (q) => q.eq("node.id", source))
       .unique();
-    if (sourceNode) {
-      console.log("sourceNode already exists", args.connection);
+    if (!sourceNode) {
+      console.log("sourceNode doesn't exist", args.connection);
       return;
     }
     const targetNode =
@@ -147,8 +147,8 @@ export const connect = mutation({
         .query("nodes")
         .withIndex("id", (q) => q.eq("node.id", target))
         .unique());
-    if (targetNode) {
-      console.log("targetNode already exists", args.connection);
+    if (!targetNode) {
+      console.log("targetNode doesn't exist", args.connection);
       return;
     }
     const edges = addEdge(args.connection, []);
