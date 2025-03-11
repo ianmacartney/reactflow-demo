@@ -28,7 +28,7 @@ npm run dev
 If you're reading this README on GitHub and want to use this template, run:
 
 ```
-npm create convex@latest -- -t get-convex/reactflow-example
+npm create convex@latest -- -t ianmacartney/reactflow-demo
 ```
 
 For more information on how to configure Convex Auth, check out the [Convex Auth docs](https://labs.convex.dev/auth/).
