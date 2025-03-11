@@ -1,16 +1,11 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
-import {
-  action,
-  internalAction,
-  internalMutation,
-  internalQuery,
-  mutation,
-  query,
-} from "../_generated/server";
-import { nodeChangeValidator, nodeValidator } from "./types";
-import { rfNode } from "../schema";
 import { applyNodeChanges } from "reactflow";
+import {
+  mutation,
+  query
+} from "../_generated/server";
+import { nodeData, rfNode } from "../schema";
+import { nodeChangeValidator } from "./types";
 
 export const get = query({
   args: { diagramId: v.string() },
@@ -20,6 +15,35 @@ export const get = query({
       .withIndex("diagram", (q) => q.eq("diagramId", args.diagramId))
       .collect();
     return all.map((node) => node.node);
+  },
+});
+
+export const create = mutation({
+  args: {
+    diagramId: v.string(),
+    nodeId: v.string(),
+    position: v.object({
+      x: v.number(),
+      y: v.number(),
+    }),
+    data: nodeData,
+  },
+  handler: async (ctx, args) => {
+    // Create a new node with the simplified structure
+    const node = {
+      id: args.nodeId,
+      position: args.position,
+      data: args.data,
+      type: 'default'
+    };
+
+    // Insert directly into the database
+    await ctx.db.insert("nodes", {
+      diagramId: args.diagramId,
+      node,
+    });
+
+    return node;
   },
 });
 
