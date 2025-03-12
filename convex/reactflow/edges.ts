@@ -1,28 +1,18 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
-import {
-  action,
-  internalAction,
-  internalMutation,
-  internalQuery,
-  mutation,
-  query,
-} from "../_generated/server";
-import {
-  connectionValidator,
-  edgeChangeValidator,
-  edgeValidator,
-} from "./types";
+import { mutation, query } from "../_generated/server";
+import { connectionValidator, edgeChangeValidator } from "./types";
 import { rfEdge } from "../schema";
 import { addEdge, applyEdgeChanges } from "reactflow";
 
 export const get = query({
   args: { diagramId: v.string() },
   handler: async (ctx, args) => {
+    // Do access checks here
     const all = await ctx.db
       .query("edges")
       .withIndex("diagram", (q) => q.eq("diagramId", args.diagramId))
       .collect();
+    // Modify data returned, join it, etc. here
     return all.map((edge) => edge.edge);
   },
 });
@@ -33,6 +23,7 @@ export const update = mutation({
     changes: v.array(edgeChangeValidator(rfEdge)),
   },
   handler: async (ctx, args) => {
+    // Do access checks here
     // Get the ids of the edges that are being changed
     const ids = args.changes.flatMap((change) =>
       change.type === "add" || change.type === "reset"
@@ -97,6 +88,7 @@ export const connect = mutation({
     connection: connectionValidator,
   },
   handler: async (ctx, args) => {
+    // Do access checks here
     const { source, target, sourceHandle, targetHandle } = args.connection;
     if (!source || !target) {
       throw new Error("Source or target not specified");
@@ -133,8 +125,8 @@ export const connect = mutation({
       .query("nodes")
       .withIndex("id", (q) => q.eq("node.id", source))
       .unique();
-    if (sourceNode) {
-      console.log("sourceNode already exists", args.connection);
+    if (!sourceNode) {
+      console.log("sourceNode doesn't exist", args.connection);
       return;
     }
     const targetNode =
@@ -143,8 +135,8 @@ export const connect = mutation({
         .query("nodes")
         .withIndex("id", (q) => q.eq("node.id", target))
         .unique());
-    if (targetNode) {
-      console.log("targetNode already exists", args.connection);
+    if (!targetNode) {
+      console.log("targetNode doesn't exist", args.connection);
       return;
     }
     const edges = addEdge(args.connection, []);
