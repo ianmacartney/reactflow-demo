@@ -7,7 +7,7 @@ handles.
 
 Using optimistic updates for fast local performance.
 
-![screenshot](./screenshot.png)
+![example](./multiplayer.gif)
 
 [ReactFlow](https://reactflow.dev/) is a popular library for building flow charts and diagrams.
 
