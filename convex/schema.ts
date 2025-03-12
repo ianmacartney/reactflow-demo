@@ -1,14 +1,13 @@
-import { defineSchema, defineTable } from "convex/server";
-import { Infer, v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
-import { Node } from "reactflow";
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
 import { edgeValidator, nodeValidator } from "./reactflow/types";
 
-export const nodeData = v.object({
+export const nodeDataValidator = v.object({
   foo: v.number(),
 });
 
-export const rfNode = nodeValidator(nodeData);
+export const rfNode = nodeValidator(nodeDataValidator);
 
 export const edgeData = v.object({
   bar: v.number(),

@@ -21,6 +21,11 @@ import ReactFlow, {
   ReactFlowInstance
 } from "reactflow";
 import { api } from "../convex/_generated/api";
+import CounterNode from "./components/CounterNode";
+
+const nodeTypes = {
+  default: CounterNode
+};
 
 export default function App() {
   return (
@@ -245,6 +250,7 @@ function Content() {
           onConnect={onConnect}
           onInit={onInit}
           onPaneClick={onPaneClick}
+          nodeTypes={nodeTypes}
           fitView
         >
           <MiniMap />

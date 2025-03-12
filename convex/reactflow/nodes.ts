@@ -4,7 +4,7 @@ import {
   mutation,
   query
 } from "../_generated/server";
-import { nodeData, rfNode } from "../schema";
+import { nodeDataValidator, rfNode } from "../schema";
 import { nodeChangeValidator } from "./types";
 
 export const get = query({
@@ -26,7 +26,7 @@ export const create = mutation({
       x: v.number(),
       y: v.number(),
     }),
-    data: nodeData,
+    data: nodeDataValidator,
   },
   handler: async (ctx, args) => {
     // Create a new node with the simplified structure
@@ -90,5 +90,34 @@ export const update = mutation({
         }
       }),
     );
+  },
+});
+
+export const updateNodeData = mutation({
+  args: {
+    diagramId: v.string(),
+    nodeId: v.string(),
+    data: nodeDataValidator,
+  },
+  handler: async (ctx, args) => {
+    // Find the node to update
+    const node = await ctx.db
+      .query("nodes")
+      .withIndex("id", (q) => q.eq("node.id", args.nodeId))
+      .unique();
+    
+    if (!node) {
+      throw new Error(`Node ${args.nodeId} not found`);
+    }
+    
+    // Update just the data field
+    await ctx.db.patch(node._id, { 
+      node: {
+        ...node.node,
+        data: args.data
+      }
+    });
+    
+    return true;
   },
 });
