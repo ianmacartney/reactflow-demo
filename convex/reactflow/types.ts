@@ -46,17 +46,17 @@ const dimensions = v.object({
 // });
 
 const duple = v.array(v.number()) as VArray<[number, number], VFloat64>;
-const truple = v.array(v.number()) as VArray<
-  [number, number, number],
-  VFloat64
->;
+// const truple = v.array(v.number()) as VArray<
+//   [number, number, number],
+//   VFloat64
+// >;
 const twoByTwo = v.array(v.array(v.number())) as VArray<
   [[number, number], [number, number]],
   typeof duple
 >;
 
 // 3 elements: scale, translateX, translateY
-const transform = truple;
+// const transform = truple;
 
 // 2x2 array of numbers
 const coordinateExtent = twoByTwo;
@@ -109,6 +109,8 @@ export const nodeValidator = <T extends Validator<Value, "required", any>>(
   });
 
 // This is just a type check to make sure the types match ReactFlow's Node type
+// ignore unused variable
+// @ts-expect-error TS6133
 const _node: Node = {} as Infer<
   ReturnType<typeof nodeValidator<VString<string, "required">>>
 >;
@@ -216,7 +218,10 @@ export const edgeValidator = <T extends Validator<Value, "required", any>>(
 type OurEdge = Infer<
   ReturnType<typeof edgeValidator<VString<string, "required">>>
 >;
+// ignore unused variable
+// @ts-expect-error TS6133
 const _edge: Edge = {} as OurEdge;
+// @ts-expect-error TS6133
 const _edgeOtherWay: OurEdge = {} as Edge;
 
 const nodeDimensionChange = v.object({
@@ -273,6 +278,7 @@ export const nodeChangeValidator = <
     nodeAddChange(data),
     nodeResetChange(data),
   );
+// @ts-expect-error TS6133
 const _nodeChange: NodeChange = {} as Infer<
   ReturnType<typeof nodeChangeValidator<VString<string, "required">>>
 >;
@@ -307,6 +313,7 @@ export const edgeChangeValidator = <
     edgeResetChange(data),
   );
 
+// @ts-expect-error TS6133
 const _edgeChange: EdgeChange = {} as Infer<
   ReturnType<typeof edgeChangeValidator<VString<string, "required">>>
 >;
