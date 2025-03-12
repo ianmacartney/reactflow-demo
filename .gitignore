@@ -26,3 +26,6 @@ dist-ssr
 # Ignored for the template, you probably want to remove it:
 package-lock.json
 bun.lock
+
+# Local Netlify folder
+.netlify
