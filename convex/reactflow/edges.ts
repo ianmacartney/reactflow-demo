@@ -47,6 +47,7 @@ export const update = mutation({
       args.changes,
       edges.map((edge) => edge.edge),
     );
+    const updatedIds = new Set(updatedEdges.map((n) => n.id));
 
     await Promise.all(
       updatedEdges.map(async (edge) => {
@@ -77,6 +78,14 @@ export const update = mutation({
               target,
             });
           }
+      }),
+    );
+    // Handle deletions
+    await Promise.all(
+      edges.map(async (edge) => {
+        if (!updatedIds.has(edge.edge.id)) {
+          await ctx.db.delete(edge._id);
+        }
       }),
     );
   },

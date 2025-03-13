@@ -143,6 +143,7 @@ export const update = mutation({
       args.changes,
       nodes.map((node) => node.node),
     );
+    const updatedIds = new Set(updatedNodes.map((n) => n.id));
 
     await Promise.all(
       updatedNodes.map(async (node) => {
@@ -154,6 +155,14 @@ export const update = mutation({
             diagramId: args.diagramId,
             node,
           });
+        }
+      }),
+    );
+    // Handle deletions
+    await Promise.all(
+      nodes.map(async (node) => {
+        if (!updatedIds.has(node.node.id)) {
+          await ctx.db.delete(node._id);
         }
       }),
     );
