@@ -6,8 +6,9 @@ import { ClientData } from "../../convex/shared";
 export default function CounterNode({ id, data }: NodeProps<ClientData>) {
   const updateData = useMutation(api.reactflow.nodes.updateData).withOptimisticUpdate(
     (store, args) => {
-      const nodes = store.getQuery(api.reactflow.nodes.get, { diagramId }) ?? [];
-      const updatedNodes = nodes.map(node => {
+      const nodes = store.getQuery(api.reactflow.nodes.get, { diagramId });
+      if (!nodes) return;
+      const updatedNodes = nodes?.map(node => {
         if (node.id === args.nodeId) {
           return {
             ...node,
