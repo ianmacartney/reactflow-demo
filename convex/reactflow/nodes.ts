@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { addEdge, applyNodeChanges } from "reactflow";
 import { mutation, query } from "../_generated/server";
-import { clientData } from "../shared";
+import { ClientData, clientData } from "../shared";
 import { canReadDiagramData, canWriteDiagramData } from "./access";
 import { nodeChangeValidator } from "./types";
 
@@ -189,9 +189,10 @@ export const getData = query({
     }
     const counterId = node.node.data.counterId;
     const counter = counterId && (await ctx.db.get(counterId));
+    const { counterId: _, ...restData } = node.node.data;
     return {
-      count: counter?.count ?? 0, count2: node.node.data.count2 ?? 0
-    };
+      count: counter?.count ?? 0, ...restData
+    } as ClientData;
   },
 });
 
