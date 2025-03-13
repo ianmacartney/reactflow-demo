@@ -5,7 +5,8 @@ import { edgeValidator, nodeValidator } from "./reactflow/types";
 
 export const customData = v.object({
   counterId: v.optional(v.id("counters")),
-  // foo: v.string(),
+  count2: v.optional(v.number()),
+  foo: v.string(),
 });
 
 export const edgeData = v.object({

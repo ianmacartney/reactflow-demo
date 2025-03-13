@@ -207,7 +207,7 @@ function Content() {
           diagramId,
           nodeId,
           position,
-          data: { count: randomValue },
+          data: { count: randomValue, count2: randomValue, foo: "bar" },
           sourceNode: connectSource,
         });
         setConnectSource(undefined);

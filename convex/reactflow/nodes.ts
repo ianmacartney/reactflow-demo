@@ -1,10 +1,9 @@
 import { v } from "convex/values";
 import { addEdge, applyNodeChanges } from "reactflow";
 import { mutation, query } from "../_generated/server";
-import { customData } from "../schema";
-import { nodeChangeValidator, nodeValidator } from "./types";
 import { clientData } from "../shared";
 import { canReadDiagramData, canWriteDiagramData } from "./access";
+import { nodeChangeValidator } from "./types";
 
 export const get = query({
   args: { diagramId: v.string() },
@@ -26,6 +25,7 @@ export const get = query({
           ...node.node,
           data: {
             count: count?.count ?? 0,
+            count2: node.node.data.count2 ,
           },
         };
       }),
@@ -57,12 +57,12 @@ export const create = mutation({
 
     // Create a new node with the simplified structure, denormalized data
     const counterId = await ctx.db.insert("counters", {
-      count: args.data.count,
+      count: args.data.count ?? 0,
     });
     const node = {
       id: args.nodeId,
       position: args.position,
-      data: { counterId },
+      data: { counterId, count2: args.data.count2, foo: args.data.foo },
       type: "default",
     };
 
@@ -190,16 +190,34 @@ export const getData = query({
     const counterId = node.node.data.counterId;
     const counter = counterId && (await ctx.db.get(counterId));
     return {
-      count: counter?.count ?? 0,
+      count: counter?.count ?? 0, count2: node.node.data.count2 ?? 0
     };
   },
+});
+
+
+// does not work
+// const partialClientData = v.object(
+//   Object.fromEntries(
+//     Object.entries(clientData.fields).map(([key, validator]) => [
+//       key, 
+//       v.optional(validator)
+//     ])
+//   )
+// );
+
+const partialClientData = v.object({
+  count: v.optional(v.number()),
+  count2: v.optional(v.number()),
+  foo: v.optional(v.string()),
+  // Include any other fields from clientData with their proper types
 });
 
 export const updateData = mutation({
   args: {
     diagramId: v.string(),
     nodeId: v.string(),
-    data: clientData,
+    data: partialClientData,
   },
   handler: async (ctx, args) => {
     if (!canWriteDiagramData(ctx, args.diagramId)) {
@@ -215,25 +233,34 @@ export const updateData = mutation({
     if (!node) {
       throw new Error(`Node ${args.nodeId} not found`);
     }
-    let counterId = node.node.data.counterId;
-    const counter = counterId && (await ctx.db.get(counterId));
-    if (!counter) {
-      counterId = await ctx.db.insert("counters", {
-        count: args.data.count,
-      });
-    } else {
-      await ctx.db.patch(counter._id, {
-        count: args.data.count,
-      });
+    
+    if(args.data.count) {
+     let counterId = node.node.data.counterId;
+      const counter = counterId && (await ctx.db.get(counterId));
+      if (!counter) {
+        counterId = await ctx.db.insert("counters", {
+          count: args.data.count,
+        });
+      } else {
+        await ctx.db.patch(counter._id, {
+          count: args.data.count,
+        });
+      }
     }
 
-    // Alternatively, if we wanted to update the node data:
-    // await ctx.db.patch(node._id, {
-    //   node: {
-    //     ...node.node,
-    //     data: {...},
-    //   },
-    // });
+    // update the node data:
+    await ctx.db.patch(node._id, {
+      node: {
+        ...node.node,
+        data: { 
+          ...node.node.data,  // Preserve existing data
+          ...(Object.fromEntries(
+            Object.entries(args.data)
+              .filter(([key]) => key !== 'count') // Skip 'count' as it's handled separately
+          )),
+        },
+      },
+    });
 
     return true;
   },
