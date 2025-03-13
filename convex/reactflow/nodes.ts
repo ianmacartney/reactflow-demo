@@ -160,6 +160,32 @@ export const update = mutation({
   },
 });
 
+// If you want to subscribe to the data for just one node:
+export const getData = query({
+  args: {
+    diagramId: v.string(),
+    nodeId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (!canReadDiagramData(ctx, args.diagramId)) {
+      throw new Error("Unauthorized");
+    }
+
+    const node = await ctx.db
+      .query("nodes")
+      .withIndex("id", (q) => q.eq("node.id", args.nodeId))
+      .unique();
+    if (!node) {
+      throw new Error(`Node ${args.nodeId} not found`);
+    }
+    const counterId = node.node.data.counterId;
+    const counter = counterId && (await ctx.db.get(counterId));
+    return {
+      count: counter?.count ?? 0,
+    };
+  },
+});
+
 export const updateData = mutation({
   args: {
     diagramId: v.string(),
