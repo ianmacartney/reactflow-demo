@@ -109,7 +109,6 @@ export const nodeValidator = <T extends Validator<Value, "required", any>>(
 
 // This is just a type check to make sure the types match ReactFlow's Node type
 // ignore unused variable
-// @ts-expect-error TS6133
 const _node: Node = {} as Infer<
   ReturnType<typeof nodeValidator<VString<string, "required">>>
 >;
@@ -218,9 +217,7 @@ type OurEdge = Infer<
   ReturnType<typeof edgeValidator<VString<string, "required">>>
 >;
 // ignore unused variable
-// @ts-expect-error TS6133
 const _edge: Edge = {} as OurEdge;
-// @ts-expect-error TS6133
 const _edgeOtherWay: OurEdge = {} as Edge;
 
 const nodeDimensionChange = v.object({
@@ -284,7 +281,6 @@ export const nodeChangeValidator = <
     nodeResetChange(data),
     //nodeDataChange
   );
-// @ts-expect-error TS6133
 const _nodeChange: NodeChange = {} as Infer<
   ReturnType<typeof nodeChangeValidator<VString<string, "required">>>
 >;
@@ -326,7 +322,6 @@ export const edgeChangeValidator = <
     edgeResetChange(data),
   );
 
-// @ts-expect-error TS6133
 const _edgeChange: EdgeChange = {} as Infer<
   ReturnType<typeof edgeChangeValidator<VString<string, "required">>>
 >;
