@@ -4,11 +4,14 @@ import { mutation, query } from "../_generated/server";
 import { customData } from "../schema";
 import { nodeChangeValidator, nodeValidator } from "./types";
 import { clientData } from "../shared";
+import { canReadDiagramData, canWriteDiagramData } from "./access";
 
 export const get = query({
   args: { diagramId: v.string() },
   handler: async (ctx, args) => {
-    // Do access checks here
+    if (!canReadDiagramData(ctx, args.diagramId)) {
+      throw new Error("Unauthorized");
+    }
     const all = await ctx.db
       .query("nodes")
       .withIndex("diagram", (q) => q.eq("diagramId", args.diagramId))
@@ -48,7 +51,10 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // Do access checks here
+    if (!canWriteDiagramData(ctx, args.diagramId)) {
+      throw new Error("Unauthorized");
+    }
+
     // Create a new node with the simplified structure, denormalized data
     const counterId = await ctx.db.insert("counters", {
       count: args.data.count,
@@ -110,7 +116,10 @@ export const update = mutation({
     changes: v.array(nodeChangeValidator(clientData)),
   },
   handler: async (ctx, args) => {
-    // Do access checks here
+    if (!canWriteDiagramData(ctx, args.diagramId)) {
+      throw new Error("Unauthorized");
+    }
+
     // Get the ids of the nodes that are being changed
     const ids = args.changes.flatMap((change) =>
       change.type === "add" || change.type === "reset"
@@ -158,6 +167,10 @@ export const updateData = mutation({
     data: clientData,
   },
   handler: async (ctx, args) => {
+    if (!canWriteDiagramData(ctx, args.diagramId)) {
+      throw new Error("Unauthorized");
+    }
+
     // Find the node to update
     const node = await ctx.db
       .query("nodes")
