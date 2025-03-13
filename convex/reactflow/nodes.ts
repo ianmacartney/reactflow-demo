@@ -16,7 +16,7 @@ export const get = query({
       .withIndex("diagram", (q) => q.eq("diagramId", args.diagramId))
       .collect();
     // Modify data returned, join it, etc. here
-    const nodesWithCounts = await Promise.all(
+    const nodesWithCount = await Promise.all(
       all.map(async (node) => {
         const count =
           node.node.data.counterId &&
@@ -24,13 +24,13 @@ export const get = query({
         return {
           ...node.node,
           data: {
+            ...node.node.data,
             count: count?.count,
-            count2: node.node.data.count2 ,
           },
         };
       }),
     );
-    return nodesWithCounts;
+    return nodesWithCount;
   },
 });
 
