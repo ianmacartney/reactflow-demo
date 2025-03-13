@@ -24,7 +24,7 @@ export const get = query({
         return {
           ...node.node,
           data: {
-            count: count?.count ?? 0,
+            count: count?.count,
             count2: node.node.data.count2 ,
           },
         };
