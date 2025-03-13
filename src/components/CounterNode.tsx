@@ -4,7 +4,18 @@ import { api } from "../../convex/_generated/api";
 import { ClientData } from "../../convex/shared";
 
 export default function CounterNode({ id, data }: NodeProps<ClientData>) {
-  const updateData = useMutation(api.reactflow.nodes.updateData);
+  const updateData = useMutation(
+    api.reactflow.nodes.updateData,
+  ).withOptimisticUpdate((store, args) => {
+    const nodes = store.getQuery(api.reactflow.nodes.get, { diagramId });
+    const updated = nodes?.map((n) => {
+      if (n.id === id) {
+        return { ...n, data: args.data };
+      }
+      return n;
+    });
+    store.setQuery(api.reactflow.nodes.get, { diagramId }, updated);
+  });
   const diagramId = window.location.hash.slice(1);
 
   const incrementCounter = () => {
