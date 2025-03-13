@@ -4,8 +4,9 @@ import { v } from "convex/values";
 import { edgeValidator, nodeValidator } from "./reactflow/types";
 
 export const customData = v.object({
-  counterId: v.id("counters"),
-  // foo: v.string(),
+  counterId: v.optional(v.id("counters")),
+  count2: v.optional(v.number()),
+  foo: v.string(),
 });
 
 export const edgeData = v.object({
