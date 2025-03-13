@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import { addEdge, applyNodeChanges } from "reactflow";
 import { mutation, query } from "../_generated/server";
-import { nodeDataValidator, rfNode } from "../schema";
-import { nodeChangeValidator } from "./types";
+import { customData } from "../schema";
+import { nodeChangeValidator, nodeValidator } from "./types";
+import { clientData } from "../shared";
 
 export const get = query({
   args: { diagramId: v.string() },
@@ -13,7 +14,20 @@ export const get = query({
       .withIndex("diagram", (q) => q.eq("diagramId", args.diagramId))
       .collect();
     // Modify data returned, join it, etc. here
-    return all.map((node) => node.node);
+    const nodesWithCounts = await Promise.all(
+      all.map(async (node) => {
+        const count =
+          node.node.data.counterId &&
+          (await ctx.db.get(node.node.data.counterId));
+        return {
+          ...node.node,
+          data: {
+            count: count?.count ?? 0,
+          },
+        };
+      }),
+    );
+    return nodesWithCounts;
   },
 });
 
@@ -25,7 +39,7 @@ export const create = mutation({
       x: v.number(),
       y: v.number(),
     }),
-    data: nodeDataValidator,
+    data: clientData,
     sourceNode: v.optional(
       v.object({
         id: v.string(),
@@ -35,11 +49,14 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     // Do access checks here
-    // Create a new node with the simplified structure
+    // Create a new node with the simplified structure, denormalized data
+    const counterId = await ctx.db.insert("counters", {
+      count: args.data.count,
+    });
     const node = {
       id: args.nodeId,
       position: args.position,
-      data: args.data,
+      data: { counterId },
       type: "default",
     };
 
@@ -90,7 +107,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     diagramId: v.string(),
-    changes: v.array(nodeChangeValidator(rfNode)),
+    changes: v.array(nodeChangeValidator(clientData)),
   },
   handler: async (ctx, args) => {
     // Do access checks here
@@ -134,11 +151,11 @@ export const update = mutation({
   },
 });
 
-export const updateNodeData = mutation({
+export const updateData = mutation({
   args: {
     diagramId: v.string(),
     nodeId: v.string(),
-    data: nodeDataValidator,
+    data: clientData,
   },
   handler: async (ctx, args) => {
     // Find the node to update
@@ -146,19 +163,30 @@ export const updateNodeData = mutation({
       .query("nodes")
       .withIndex("id", (q) => q.eq("node.id", args.nodeId))
       .unique();
-    
+
     if (!node) {
       throw new Error(`Node ${args.nodeId} not found`);
     }
-    
-    // Update just the data field
-    await ctx.db.patch(node._id, { 
-      node: {
-        ...node.node,
-        data: args.data
-      }
-    });
-    
+    let counterId = node.node.data.counterId;
+    const counter = counterId && (await ctx.db.get(counterId));
+    if (!counter) {
+      counterId = await ctx.db.insert("counters", {
+        count: args.data.count,
+      });
+    } else {
+      await ctx.db.patch(counter._id, {
+        count: args.data.count,
+      });
+    }
+
+    // Alternatively, if we wanted to update the node data:
+    // await ctx.db.patch(node._id, {
+    //   node: {
+    //     ...node.node,
+    //     data: {...},
+    //   },
+    // });
+
     return true;
   },
 });

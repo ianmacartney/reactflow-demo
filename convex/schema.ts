@@ -3,11 +3,10 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { edgeValidator, nodeValidator } from "./reactflow/types";
 
-export const nodeDataValidator = v.object({
-  foo: v.number(),
+export const customData = v.object({
+  counterId: v.optional(v.id("counters")),
+  // foo: v.string(),
 });
-
-export const rfNode = nodeValidator(nodeDataValidator);
 
 export const edgeData = v.object({
   bar: v.number(),
@@ -25,9 +24,13 @@ export default defineSchema({
     name: v.string(),
     // Note: there's already a "by_id" index, so we can't use that name.
   }).index("id", ["id"]),
+  // Example table if you want to store data outside of the node
+  counters: defineTable({
+    count: v.number(),
+  }),
   nodes: defineTable({
     diagramId: v.string(),
-    node: rfNode,
+    node: nodeValidator(customData),
   })
     .index("diagram", ["diagramId"])
     .index("id", ["node.id"]),

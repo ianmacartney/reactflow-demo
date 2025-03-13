@@ -1,4 +1,13 @@
-import { Infer, v, Validator, Value, VArray, VFloat64, VString, VUnion } from "convex/values";
+import {
+  Infer,
+  v,
+  Validator,
+  Value,
+  VArray,
+  VFloat64,
+  VString,
+  VUnion,
+} from "convex/values";
 import {
   Edge,
   EdgeChange,
@@ -261,12 +270,6 @@ const nodeResetChange = <T extends Validator<Value, "required", any>>(
     type: v.literal("reset"),
   });
 
-  // const nodeDataChange = 
-  //   v.object({
-  //     item: nodeDataValidator,
-  //     type: v.literal("data"),
-  //   });
-
 export const nodeChangeValidator = <
   T extends Validator<Value, "required", any>,
 >(
@@ -279,16 +282,10 @@ export const nodeChangeValidator = <
     nodeRemoveChange,
     nodeAddChange(data),
     nodeResetChange(data),
-    //nodeDataChange
   );
 const _nodeChange: NodeChange = {} as Infer<
   ReturnType<typeof nodeChangeValidator<VString<string, "required">>>
 >;
-
-// export type NodeDataChange = {
-//   item: Infer<typeof nodeDataValidator>;
-//   type: 'data';
-// };
 
 // export type NodeChangeExtended = NodeChange | NodeDataChange;
 

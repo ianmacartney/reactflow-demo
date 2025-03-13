@@ -29,7 +29,7 @@ import { SignInForm, SignOutButton } from "./Auth";
 import CounterNode from "./components/CounterNode";
 
 const nodeTypes = {
-  default: CounterNode
+  default: CounterNode,
 };
 
 export default function App() {
@@ -207,7 +207,7 @@ function Content() {
           diagramId,
           nodeId,
           position,
-          data: { foo: randomValue },
+          data: { count: randomValue },
           sourceNode: connectSource,
         });
         setConnectSource(undefined);

@@ -18,6 +18,7 @@ import type * as http from "../http.js";
 import type * as reactflow_edges from "../reactflow/edges.js";
 import type * as reactflow_nodes from "../reactflow/nodes.js";
 import type * as reactflow_types from "../reactflow/types.js";
+import type * as shared from "../shared.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   "reactflow/edges": typeof reactflow_edges;
   "reactflow/nodes": typeof reactflow_nodes;
   "reactflow/types": typeof reactflow_types;
+  shared: typeof shared;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
