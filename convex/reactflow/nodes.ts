@@ -37,7 +37,6 @@ export const get = query({
 export const create = mutation({
   args: {
     diagramId: v.string(),
-    nodeId: v.string(),
     position: v.object({
       x: v.number(),
       y: v.number(),
@@ -60,7 +59,7 @@ export const create = mutation({
       count: args.data.count,
     });
     const node = {
-      id: args.nodeId,
+      id: crypto.randomUUID(),
       position: args.position,
       data: { counterId },
       type: "default",
@@ -87,7 +86,7 @@ export const create = mutation({
           {
             id: crypto.randomUUID(),
             source: sourceNode.id,
-            target: args.nodeId,
+            target: node.id,
             sourceHandle: sourceNode.handlepos,
             targetHandle,
           },

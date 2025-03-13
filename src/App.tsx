@@ -87,7 +87,7 @@ function Content() {
   ).withOptimisticUpdate((store, args) => {
     const nodes = store.getQuery(api.reactflow.nodes.get, { diagramId }) ?? [];
     const newNode = {
-      id: args.nodeId,
+      id: "pending-" + crypto.randomUUID(),
       position: args.position,
       data: args.data,
       type: "default",
@@ -101,9 +101,9 @@ function Content() {
           source.position.y > args.position.y ? "top" : "bottom";
         const newEdges = addEdge(
           {
-            id: crypto.randomUUID(),
+            id: "pending-" + crypto.randomUUID(),
             source: source.id,
-            target: args.nodeId,
+            target: newNode.id,
             sourceHandle: sourceNode.handlepos,
             targetHandle,
           },
@@ -123,7 +123,14 @@ function Content() {
     (changes: NodeChange[]) => {
       // Separate out data to sync here
       console.log("onNodesChange", { changes });
-      updateNodes({ diagramId, changes });
+      const avoidPending = changes.filter((change) => {
+        if ("id" in change && change.id.startsWith("pending-")) {
+          console.warn("ignoring pending node change", { change });
+          return false;
+        }
+        return true;
+      });
+      updateNodes({ diagramId, changes: avoidPending });
     },
     [updateNodes],
   );
@@ -139,8 +146,15 @@ function Content() {
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       // Separate out data to sync here
+      const avoidPending = changes.filter((change) => {
+        if ("id" in change && change.id.startsWith("pending-")) {
+          console.warn("ignoring pending edge change", { change });
+          return false;
+        }
+        return true;
+      });
       console.log("onEdgesChange", { changes });
-      updateEdges({ diagramId, changes });
+      updateEdges({ diagramId, changes: avoidPending });
     },
     [updateEdges],
   );
@@ -156,6 +170,13 @@ function Content() {
   const onConnect = useCallback(
     (connection: Connection) => {
       console.log("onConnect", { connection });
+      if (
+        connection.source?.startsWith("pending-") ||
+        connection.target?.startsWith("pending-")
+      ) {
+        console.warn("ignoring pending connection", { connection });
+        return;
+      }
       connect({ diagramId, connection });
     },
     [connect],
@@ -199,13 +220,11 @@ function Content() {
         });
 
         const randomValue = Math.floor(Math.random() * 100);
-        const nodeId = `node-${Math.floor(Math.random() * 10000)}`;
 
-        console.log("onPaneClick", { event, position, nodeId });
+        console.log("onPaneClick", { event, position });
         // Combine data to sync up / split out
         createNode({
           diagramId,
-          nodeId,
           position,
           data: { count: randomValue },
           sourceNode: connectSource,
